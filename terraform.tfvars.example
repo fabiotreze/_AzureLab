@@ -1,0 +1,69 @@
+# General Configuration
+environment     = "lab"
+location        = "East US"
+resource_prefix = "azurelab"
+
+# Hub Network Configuration
+hub_vnet_address_space = ["10.0.0.0/16"]
+
+hub_subnets = {
+  "GatewaySubnet" = {
+    address_prefixes = ["10.0.1.0/27"]
+  }
+  "AzureFirewallSubnet" = {
+    address_prefixes = ["10.0.2.0/26"]
+  }
+  "AzureBastionSubnet" = {
+    address_prefixes = ["10.0.3.0/27"]
+  }
+  "hub-internal" = {
+    address_prefixes  = ["10.0.10.0/24"]
+    service_endpoints = ["Microsoft.Storage", "Microsoft.KeyVault"]
+  }
+}
+
+# Spoke Network Configuration
+spoke_vnets = {
+  "spoke1" = {
+    address_space = ["10.1.0.0/16"]
+    subnets = {
+      "web" = {
+        address_prefixes  = ["10.1.1.0/24"]
+        service_endpoints = ["Microsoft.Storage"]
+      }
+      "app" = {
+        address_prefixes  = ["10.1.2.0/24"]
+        service_endpoints = ["Microsoft.Storage", "Microsoft.Sql"]
+      }
+    }
+  }
+  "spoke2" = {
+    address_space = ["10.2.0.0/16"]
+    subnets = {
+      "data" = {
+        address_prefixes  = ["10.2.1.0/24"]
+        service_endpoints = ["Microsoft.Storage", "Microsoft.Sql"]
+      }
+      "compute" = {
+        address_prefixes = ["10.2.2.0/24"]
+      }
+    }
+  }
+}
+
+# Security Configuration
+enable_azure_firewall   = true
+enable_azure_bastion    = true
+enable_ddos_protection  = false
+allowed_source_ips      = [] # Add your IP addresses here for management access
+
+# Monitoring and Logging
+enable_monitoring    = true
+log_retention_days   = 30
+
+# Tags
+additional_tags = {
+  Owner       = "YourName"
+  Environment = "lab"
+  CostCenter  = "IT"
+}
