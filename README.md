@@ -51,6 +51,95 @@ This Terraform configuration creates a hub-spoke network topology in Azure with 
 3. **Azure Subscription** with appropriate permissions
 4. **Service Principal** or **Managed Identity** for authentication
 
+## 🗄️ Backend Storage Setup
+
+Before deploying the infrastructure, you need to create an Azure Storage Account to store Terraform state remotely. This ensures state consistency and enables team collaboration.
+
+### Create Storage Account for Terraform State
+
+**Option 1: Using PowerShell**
+```powershell
+# Based on: https://learn.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=powershell
+
+# Define variables
+$RESOURCE_GROUP_NAME='rg-tfstate-eus2'
+$STORAGE_ACCOUNT_NAME="tfstate$(Get-Random)"
+$CONTAINER_NAME='tfstate'
+
+# Create resource group
+New-AzResourceGroup -Name $RESOURCE_GROUP_NAME -Location eastus2 -Verbose
+
+# Create storage account
+$storageAccount = New-AzStorageAccount `
+    -ResourceGroupName $RESOURCE_GROUP_NAME `
+    -Name $STORAGE_ACCOUNT_NAME `
+    -SkuName Standard_LRS `
+    -Location eastus2 `
+    -AllowBlobPublicAccess $false `
+    -AllowSharedKeyAccess $true `
+    -Verbose
+
+# Create blob container
+New-AzStorageContainer -Name $CONTAINER_NAME -Context $storageAccount.context -Verbose
+
+# Get and set access key
+$ACCOUNT_KEY = (Get-AzStorageAccountKey -ResourceGroupName $RESOURCE_GROUP_NAME -Name $STORAGE_ACCOUNT_NAME)[0].value
+$env:ARM_ACCESS_KEY = $ACCOUNT_KEY
+
+# Display storage account name (update backend.tf with this value)
+Write-Host "Storage Account Name: $STORAGE_ACCOUNT_NAME" -ForegroundColor Green
+Write-Host "Update your backend.tf with this storage account name" -ForegroundColor Yellow
+```
+
+**Option 2: Using Azure CLI**
+```bash
+# Define variables
+RESOURCE_GROUP_NAME='rg-tfstate-eus2'
+STORAGE_ACCOUNT_NAME="tfstate$RANDOM"
+CONTAINER_NAME='tfstate'
+
+# Create resource group
+az group create --name $RESOURCE_GROUP_NAME --location eastus2
+
+# Create storage account
+az storage account create \
+    --resource-group $RESOURCE_GROUP_NAME \
+    --name $STORAGE_ACCOUNT_NAME \
+    --sku Standard_LRS \
+    --encryption-services blob \
+    --allow-blob-public-access false
+
+# Create blob container
+az storage container create \
+    --name $CONTAINER_NAME \
+    --account-name $STORAGE_ACCOUNT_NAME
+
+# Get storage account key and set environment variable
+ACCOUNT_KEY=$(az storage account keys list --resource-group $RESOURCE_GROUP_NAME --account-name $STORAGE_ACCOUNT_NAME --query '[0].value' -o tsv)
+export ARM_ACCESS_KEY=$ACCOUNT_KEY
+
+# Display storage account name
+echo "Storage Account Name: $STORAGE_ACCOUNT_NAME"
+echo "Update your backend.tf with this storage account name"
+```
+
+### Update Backend Configuration
+
+After creating the storage account, update `backend.tf` with your storage account name:
+
+```hcl
+terraform {
+  backend "azurerm" {
+    resource_group_name  = "rg-tfstate-eus2"
+    storage_account_name = "tfstate123456789"  # Replace with your storage account name
+    container_name       = "tfstate"
+    key                  = "project1-terraform.tfstate"
+  }
+}
+```
+
+> **Important**: The storage account name must be globally unique across all Azure accounts. The scripts above generate a random suffix to ensure uniqueness.
+
 ## 🔐 Security Setup
 
 ### Authentication Options
@@ -77,26 +166,30 @@ source .env
 
 ## 🚀 Quick Start
 
-1. **Clone and Navigate**
+1. **Create Backend Storage** (One-time setup)
+   - Follow the [Backend Storage Setup](#%EF%B8%8F-backend-storage-setup) section above
+   - Update `backend.tf` with your storage account name
+
+2. **Clone and Navigate**
    ```bash
    cd Project1
    ```
 
-2. **Review Configuration**
+3. **Review Configuration**
    - Check `terraform.tfvars.example` for configuration options
    - Copy to `terraform.tfvars` and customize values
 
-3. **Initialize**
+4. **Initialize**
    ```bash
    terraform init
    ```
 
-4. **Plan**
+5. **Plan**
    ```bash
    terraform plan -var-file="terraform.tfvars"
    ```
 
-5. **Deploy**
+6. **Deploy**
    ```bash
    terraform apply -var-file="terraform.tfvars"
    ```
