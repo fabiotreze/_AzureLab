@@ -1,22 +1,16 @@
 # Example Terraform Variables File
 # Copy this file to terraform.tfvars and customize the values
 
-# Environment configuration
+# Environment configuration (dev, staging, prod)
 environment = "dev"
 
 # Primary Azure region (Hub will be in South Central US)
 primary_location = "southcentralus"
 
-# Resource groups configuration
-resource_group_config = {
-  hub = {
-    name     = "rg-hub-spoke-network-dev-scu"  # SCU for South Central US
-    location = "southcentralus"
-  }
-  spoke1 = {
-    name     = "rg-spoke1-network-dev-brs"     # BRS for Brazil South
-    location = "brazilsouth"
-  }
+# Resource group locations (names are automatically generated)
+resource_group_locations = {
+  hub    = "southcentralus"  # SCU for South Central US
+  spoke1 = "brazilsouth"     # BRS for Brazil South
 }
 
 # Optional: Enable network monitoring features

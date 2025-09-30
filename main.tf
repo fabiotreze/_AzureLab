@@ -4,7 +4,7 @@
 
 # Resource Groups
 resource "azurerm_resource_group" "rg" {
-  for_each = var.resource_group_config
+  for_each = local.resource_group_config
 
   name     = each.value.name
   location = each.value.location
@@ -14,6 +14,37 @@ resource "azurerm_resource_group" "rg" {
     NetworkRole  = each.key
   })
 }
+
+# Hub DNS
+module "dns_hub" {
+  source = "./modules/dns"
+
+  name                = "${local.naming_convention.dns}-hub-${local.region_abbreviation[local.network_config.hub.location]}"
+  location            = local.network_config.hub.location
+  resource_group_name = azurerm_resource_group.rg["hub"].name
+  virtual_network_id  = module.vnet_hub.vnet_id
+  
+  dns_zones = {
+    guestconfig = {
+      zone_name            = "privatelink.guestconfiguration.azure.com"
+      registration_enabled = false
+    }
+    kubeconfig = {
+      zone_name            = "privatelink.dp.kubernetesconfiguration.azure.com"
+      registration_enabled = false
+    }
+    his = {
+      zone_name            = "privatelink.his.arc.azure.com"
+      registration_enabled = false
+    }
+  }
+
+  tags = merge(local.common_tags, {
+    Purpose     = "Private DNS"
+    NetworkRole = "Hub"
+  })
+}
+
 
 # Hub VNet
 module "vnet_hub" {

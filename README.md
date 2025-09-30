@@ -1,6 +1,6 @@
-# Hub-Spoke Network Infrastructure
+# Hub-Spoke Network Infrastructure with DNS Management
 
-This Terraform configuration creates a hub-spoke network topology in Azure with optimized security, naming conventions, and network design.
+This Terraform configuration creates a comprehensive hub-spoke network topology in Azure with DNS management, security features, and standardized naming conventions.
 
 ## 🏗️ Architecture Overview
 
@@ -31,18 +31,30 @@ This Terraform configuration creates a hub-spoke network topology in Azure with 
 │                         │       │ │ 172.16.4.0/24       │ │
 │                         │       │ └─────────────────────┘ │
 └─────────────────────────┘       └─────────────────────────┘
+                │
+                ▼
+    ┌─────────────────────┐
+    │     DNS Zones       │
+    │  Private DNS Zone   │
+    │ *.internal.local    │
+    │                     │
+    │  Public DNS Zone    │
+    │ example.com         │
+    └─────────────────────┘
 ```
 
 ## 🚀 Features
 
 - **Hub-Spoke Topology**: Centralized connectivity and shared services
 - **Multi-Region Design**: Hub in South Central US, Spoke in Brazil South
+- **DNS Management**: Private and Public DNS zones with VNet linking
 - **Optimized CIDR Allocation**: Efficient IP address usage with /16 networks
 - **Network Security Groups**: Subnet-level security with custom rules
 - **VNet Peering**: Secure communication between hub and spokes
 - **Standardized Naming**: Consistent resource naming conventions
 - **Common Tagging**: Centralized tag management
-- **Modular Design**: Reusable VNet module
+- **Modular Design**: Reusable VNet and DNS modules
+- **Comprehensive Outputs**: Detailed resource information for all components
 
 ## 📋 Prerequisites
 
@@ -200,11 +212,21 @@ source .env
 
 | Variable | Description | Default | Required |
 |----------|-------------|---------|----------|
-| `environment` | Environment name | `dev` | No |
+| `environment` | Environment name (dev, staging, prod) | `dev` | No |
 | `primary_location` | Primary Azure region | `southcentralus` | No |
-| `resource_group_config` | Resource group configuration | See locals.tf | No |
+| `resource_group_locations` | Resource group locations (names auto-generated) | See variables.tf | No |
 | `enable_network_watcher` | Enable Network Watcher | `true` | No |
 | `enable_ddos_protection` | Enable DDoS Protection | `false` | No |
+| `dns_zones` | List of DNS zones to create | See variables.tf | No |
+
+### DNS Configuration
+
+The project includes DNS zone management with the following features:
+
+- **Private DNS Zones**: Internal domain resolution for VNet resources
+- **Public DNS Zones**: External domain resolution 
+- **VNet Linking**: Automatic linking of DNS zones to VNets
+- **Standardized Naming**: Consistent DNS zone naming following project conventions
 
 ### Network Configuration
 
@@ -227,7 +249,7 @@ Project1/
 ├── main.tf                    # Main infrastructure configuration
 ├── variables.tf               # Input variables
 ├── locals.tf                  # Local values and configuration
-├── outputs.tf                 # Output values
+├── outputs.tf                 # Output values (standardized format)
 ├── versions.tf                # Provider versions
 ├── backend.tf                 # Backend configuration
 ├── provider.tf                # Provider configuration
@@ -235,22 +257,59 @@ Project1/
 ├── .gitignore                 # Git ignore rules
 ├── README.md                  # This file
 └── modules/
-    └── vnet/                  # Generic VNet module
+    ├── vnet/                  # Generic VNet module
+    │   ├── main.tf
+    │   ├── variables.tf
+    │   └── outputs.tf         # Standardized VNet outputs
+    └── dns/                   # DNS zone management module
         ├── main.tf
         ├── variables.tf
-        └── outputs.tf
+        └── outputs.tf         # Standardized DNS outputs
 ```
 
-## 🔍 Outputs
+## 🔍 Outputs (Standardized Format)
 
-After deployment, you'll get outputs including:
+After deployment, you'll get standardized outputs for all resources including:
 
-- Resource Group IDs and names
-- VNet IDs and names
-- Subnet IDs and names
-- NSG IDs and names
-- Peering IDs
-- Network configuration summary
+### Resource Groups
+- **Name**: Resource group name
+- **ID**: Azure resource ID
+- **Location**: Azure region
+- **Tags**: Applied tags
+
+### Virtual Networks
+- **Name**: VNet name
+- **ID**: Azure resource ID
+- **Location**: Azure region
+- **Resource Group**: Parent resource group
+- **Address Space**: CIDR blocks
+
+### Subnets
+- **Name**: Subnet name
+- **ID**: Azure resource ID
+- **Address Prefix**: CIDR block
+- **VNet**: Parent VNet name
+
+### Network Security Groups
+- **Name**: NSG name  
+- **ID**: Azure resource ID
+- **Location**: Azure region
+- **Resource Group**: Parent resource group
+
+### DNS Zones
+- **Name**: DNS zone name
+- **ID**: Azure resource ID
+- **Type**: Private or Public zone
+- **Resource Group**: Parent resource group
+- **VNet Links**: Associated VNets (for private zones)
+
+### VNet Peerings
+- **Name**: Peering name
+- **ID**: Azure resource ID
+- **Status**: Peering status
+- **Remote VNet**: Target VNet information
+
+All outputs follow a consistent format with relevant information for monitoring, troubleshooting, and integration with other systems.
 
 ## 🛡️ Security Features
 
@@ -304,6 +363,38 @@ All resources are tagged with:
 - **CreatedBy**: Always "terraform"
 - **CreatedDate**: Creation timestamp
 - **CostCenter**: For cost allocation
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+#### Authentication Error
+```
+Error: building account: unable to configure ResourceManagerAccount: subscription ID could not be determined
+```
+
+**Solution**: Ensure you're authenticated with Azure and have a subscription set:
+
+```bash
+# Login to Azure
+az login
+
+# List available subscriptions
+az account list --output table
+
+# Set the correct subscription
+az account set --subscription "your-subscription-id"
+
+# Verify current account
+az account show
+```
+
+#### Backend Storage Access
+If you encounter issues with the backend storage, verify:
+1. Storage account exists and is accessible
+2. Container 'tfstate' exists
+3. ARM_ACCESS_KEY environment variable is set
+4. Correct storage account name in backend.tf
 
 ## 🧹 Cleanup
 

@@ -25,30 +25,24 @@ variable "primary_location" {
   }
 }
 
-variable "resource_group_config" {
-  description = "Configuration for resource groups"
-  type = map(object({
-    name     = string
-    location = string
-  }))
+variable "resource_group_locations" {
+  description = "Configuration for resource group locations"
+  type = map(string)
 
   default = {
-    hub = {
-      name     = "rg-hub-spoke-network-dev-scu" # SCU for South Central US
-      location = "southcentralus"
-    }
-    spoke1 = {
-      name     = "rg-spoke1-network-dev-brs" # BRS for Brazil South
-      location = "brazilsouth"
-    }
+    hub    = "southcentralus"  # SCU for South Central US
+    spoke1 = "brazilsouth"     # BRS for Brazil South
   }
 
   validation {
     condition = alltrue([
-      for rg in values(var.resource_group_config) :
-      can(regex("^rg-", rg.name))
+      for location in values(var.resource_group_locations) :
+      contains([
+        "brazilsouth", "brazilsoutheast", "eastus", "eastus2",
+        "westus", "westus2", "centralus", "northcentralus", "southcentralus"
+      ], location)
     ])
-    error_message = "All resource group names must start with 'rg-'."
+    error_message = "All locations must be valid Azure regions."
   }
 }
 
