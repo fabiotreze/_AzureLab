@@ -208,6 +208,64 @@ source .env
 
 ## 📝 Configuration
 
+### Environment Configuration (DEV ↔ PROD)
+
+To change between environments (dev/staging/prod), create a `terraform.tfvars` file:
+
+**Development Environment:**
+```hcl
+# terraform.tfvars
+environment = "dev"
+primary_location = "southcentralus"
+resource_group_locations = {
+  hub    = "southcentralus"
+  spoke1 = "brazilsouth"
+}
+enable_network_watcher = true
+enable_ddos_protection = false
+```
+
+**Production Environment:**
+```hcl
+# terraform.tfvars
+environment = "prod"
+primary_location = "southcentralus"
+resource_group_locations = {
+  hub    = "southcentralus"
+  spoke1 = "brazilsouth"
+}
+enable_network_watcher = true
+enable_ddos_protection = true  # Recommended for production
+```
+
+**Option 1: Using terraform.tfvars file (Recommended):**
+```bash
+# Copy example file
+cp terraform.tfvars.example terraform.tfvars
+
+# Edit terraform.tfvars with your preferred environment
+# Then deploy
+terraform plan -var-file="terraform.tfvars"
+terraform apply -var-file="terraform.tfvars"
+```
+
+**Option 2: Using command line variables:**
+```bash
+# For Production deployment
+terraform plan -var="environment=prod" -var="enable_ddos_protection=true"
+terraform apply -var="environment=prod" -var="enable_ddos_protection=true"
+
+# For Development deployment
+terraform plan -var="environment=dev" -var="enable_ddos_protection=false"
+terraform apply -var="environment=dev" -var="enable_ddos_protection=false"
+
+# Multiple variables at once
+terraform plan \
+  -var="environment=prod" \
+  -var="enable_ddos_protection=true" \
+  -var="enable_network_watcher=true"
+```
+
 ### Variables
 
 | Variable | Description | Default | Required |
