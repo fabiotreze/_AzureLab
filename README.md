@@ -1,3 +1,9 @@
+# ⚠️ Personal Project Notice
+This repository is a personal, independent project created for educational and experimental purposes.  
+It is not affiliated with or endorsed by any organization, and it contains no confidential, sensitive, or proprietary information.
+
+---
+
 # Hub-Spoke Network Infrastructure with DNS Management
 
 This Terraform configuration creates a comprehensive hub-spoke network topology in Azure with DNS management, security features, and standardized naming conventions.
